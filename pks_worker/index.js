@@ -31,29 +31,15 @@ router.get("/getKey/:id", async ({params}) => {
 const putKey = async (id, payload) => KEYS.put(id, JSON.stringify(payload))
 
 router.post("/setKey", async req => {
-  const {token, key, signature} = await req.json()
-  
-  console.log("jwtsecret", JWT_SECRET)
+  const {token, key} = await req.json()
 
-  let user = jwt.decode(token, JWT_SECRET)
-  if(user==null || !user.id) return apiResponse({message: "Token not valid or user not logged in"}, true, 403)
+  // get user from JSON Web Token
+  let user = jwt.decode(token, JWT_PUBLIC_KEY, false,"RS256")
+  if(user==null || !user.id) return apiResponse({message: "Token not valid or user not logged in"}, true, 403)
 
   console.log("user",user)
 
-  const puK = await publicKey(key)
-
-  console.log("puk", puK)
-
-  const encoder = new TextEncoder()
-
-  const keyHash = await crypto.subtle.digest("SHA-256", encoder.encode(key))
-
-  console.log("keyHash", keyHash)
-
-  let valid = await crypto.subtle.verify({ "name": "RSASSA-PKCS1-v1_5" }, puK, encoder.encode(signature), keyHash)
-  if(!valid) return apiResponse({message:"Supplied signature is not valid"}, true, 400)
-
-  const payload = {id:user.id, key, signature}
+  const payload = {id:user.id, key}
 
   await putKey(user.id, payload)
 
@@ -91,18 +77,3 @@ addEventListener('fetch', e => {
     status
   })
 }
-
-const RSA_OAEP = {
-  name: 'RSA-OAEP',
-  modulusLength: 2048,
-  // 0x010001 = 65537 is a Fermat Prime and a popular choice for the public exponent.
-  publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
-  hash: { name: 'SHA-256' },
-};
-
-/**
-* Generate CryptoKey object from public key string
-* @param {string} key String representation of public key
-* @returns {CryptoKey} The public key in it's container
-*/
-const publicKey = (key) => crypto.subtle.importKey("spki", base64js.toByteArray(key), RSA_OAEP, true, ["encrypt", "verify"])
