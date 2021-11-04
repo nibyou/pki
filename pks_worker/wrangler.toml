@@ -1,8 +1,15 @@
 name = "pks_worker"
-type = "javascript"
+type = "webpack"
 
-account_id = ""
+account_id = "dbc731f09a90a306a3281ed6abc8bd9f"
 workers_dev = true
 route = ""
 zone_id = ""
 compatibility_date = "2021-10-27"
+
+kv_namespaces = [
+	 { binding = "KEYS", preview_id = "b02dba804c544f1982c37dba30ad6cec", id = "65d04be1853a480a834e2afdbea48203" }
+]
+
+# [secrets]
+# JWT_SECRET
